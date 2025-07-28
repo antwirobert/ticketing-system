@@ -21,7 +21,11 @@ type VerifiedUser = {
 export default function PendingTicketPage() {
   const [tickets, setTickets] = useState<APITicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<number | null>(null); // Track current payment in process
+  const [processing, setProcessing] = useState<number | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<Record<number, string>>(
+    {}
+  );
+
   const navigate = useNavigate();
 
   const user = useMemo<VerifiedUser | null>(() => {
@@ -60,6 +64,12 @@ export default function PendingTicketPage() {
   }, [user, navigate]);
 
   const handlePayment = async (ticketId: number) => {
+    const method = paymentMethods[ticketId];
+    if (!method) {
+      toast.warning("Please select a payment method.");
+      return;
+    }
+
     setProcessing(ticketId);
     try {
       const response = await fetch(
@@ -69,13 +79,13 @@ export default function PendingTicketPage() {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ method }), // send method if your backend accepts it
         }
       );
       const json = await response.json();
 
       if (json.success) {
         toast.success("Payment successful!");
-
         setTickets((prevTickets) =>
           prevTickets.map((ticket) =>
             ticket.id === ticketId ? { ...ticket, status: "paid" } : ticket
@@ -157,17 +167,40 @@ export default function PendingTicketPage() {
                       </span>
                     </p>
                   </div>
-                </div>
 
-                {ticket.status === "pending" && (
-                  <Button
-                    onClick={() => handlePayment(ticket.id)}
-                    className="mt-4"
-                    disabled={processing === ticket.id}
-                  >
-                    {processing === ticket.id ? "Processing..." : "Pay Now"}
-                  </Button>
-                )}
+                  {ticket.status === "pending" && (
+                    <div className="mt-4">
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Select Payment Method:
+                      </label>
+                      <select
+                        className="w-full p-2 border rounded text-sm"
+                        value={paymentMethods[ticket.id] || ""}
+                        onChange={(e) =>
+                          setPaymentMethods((prev) => ({
+                            ...prev,
+                            [ticket.id]: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">-- Select Payment Method --</option>
+                        <option value="momo">Mobile Money</option>
+                        <option value="visa">Visa Card</option>
+                      </select>
+                      <Button
+                        onClick={() => handlePayment(ticket.id)}
+                        className={`mt-3 w-full transition-all duration-200 ${
+                          !paymentMethods[ticket.id]
+                            ? "opacity-60 blur-[1px] cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={!paymentMethods[ticket.id] || processing === ticket.id}
+                      >
+                        {processing === ticket.id ? "Processing..." : "Pay Now"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

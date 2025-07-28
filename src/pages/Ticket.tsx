@@ -138,6 +138,11 @@ export default function TicketForm() {
           className="w-full max-w-md bg-white shadow-lg rounded-xl p-8"
         >
           <div className="text-center mb-6">
+            <img
+              src="/profile_img.jpg"
+              alt="Profile image"
+              className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-gray-300 shadow"
+            />
             <h1 className="text-2xl font-bold text-gray-800">
               Generate Event Ticket
             </h1>
