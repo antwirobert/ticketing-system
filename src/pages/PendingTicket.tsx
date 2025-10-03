@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Ticket } from "lucide-react";
+// import { LogOut, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { Ticket } from "lucide-react";
 
 type APITicket = {
   id: number;

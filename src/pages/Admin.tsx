@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Ticket } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Ticket } from "lucide-react";
+// import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
@@ -25,10 +25,10 @@ type VerifiedUser = {
 export default function AdminPage() {
   const [tickets, setTickets] = useState<APITicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<number | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<Record<number, string>>(
-    {}
-  );
+  // const [processing, setProcessing] = useState<number | null>(null);
+  // const [paymentMethods, setPaymentMethods] = useState<Record<number, string>>(
+  //   {}
+  // );
 
   const navigate = useNavigate();
 

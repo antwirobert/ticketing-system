@@ -240,7 +240,7 @@ export default function TicketForm() {
                     field.onChange(val);
                     setSelectedTicket(val);
                   }}
-                  value={field.price}
+                  value={field.value}
                   disabled={loading}
                 >
                   <FormControl>
