@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { generateTicket } from "@/services";
+import Navbar from "@/components/Navbar";
+import PoliceGhanaCardVerificationForm from "@/components/PoliceGhanaCardVerificationForm";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -30,15 +32,6 @@ const formSchema = z.object({
   email: z.string().email({ message: "Enter a valid email." }),
   ticket: z.string().min(1, { message: "Select a ticket option." }),
 });
-
-const ticketOptions = [
-  {
-    label: "Over Speeding - GHS 1",
-    value: "overspeeding",
-    amount: 1,
-    ticketId: 1,
-  },
-];
 
 export default function TicketForm() {
   const [loading, setLoading] = useState(false);
@@ -53,6 +46,12 @@ export default function TicketForm() {
     );
   }, [userFromState]);
 
+  const [checkGhanaCard, setCheckGhanaCard] = useState(false);
+  const [tickets, setTickets] = useState<
+    { id: number; title: string; price: number }[]
+  >([]);
+
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,8 +62,10 @@ export default function TicketForm() {
     },
   });
 
+  // console.log("User Data:", !user);
+
   useEffect(() => {
-    if (!user) {
+    if (user === null || Object.keys(user).length === 0) {
       toast.error("User data missing. Please verify your Ghana Card first.");
       navigate("/");
     } else {
@@ -75,10 +76,44 @@ export default function TicketForm() {
         ticket: "",
       });
     }
+    setCheckGhanaCard(false);
+    fetchTickets()
   }, [user, navigate, form]);
 
-  const getTicketDetails = (value: string) =>
-    ticketOptions.find((t) => t.value === value);
+  //*****Write a function to fetch for all tickets */
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch(
+        `https://nestjs.fasthosttech.com/ticket-system/get-all-tickets`
+      );
+      const json = await response.json();
+
+      // console.log(json.data);
+
+      if (json.success && Array.isArray(json.data)) {
+        console.log(json.data);
+        setTickets(json.data);
+
+        // return json.data;
+      } else {
+        toast.error("Failed to retrieve your tickets.");
+      }
+    } catch (error) {
+      console.error("Error fetching tickets:", error);
+      toast.error("Error fetching tickets.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ticketOptions = tickets || [
+    { id: 1, title: "Standard", price: 50 },
+    { id: 2, title: "Premium", price: 100 },
+    { id: 3, title: "VIP", price: 200 },
+  ];
+
+  const getTicketDetails = (value: number) =>
+    ticketOptions.find((t) => t.price === value);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user?.id) {
@@ -86,18 +121,21 @@ export default function TicketForm() {
       return;
     }
 
-    const ticketDetails = getTicketDetails(values.ticket);
+  
+    const ticketDetails = getTicketDetails(parseInt(values.ticket));
     if (!ticketDetails) {
       toast.error("Invalid ticket type selected.");
       return;
     }
+
+    console.log("Values:", ticketDetails);
 
     setLoading(true);
 
     try {
       const result = await generateTicket({
         userId: user.id,
-        ticketId: ticketDetails.ticketId,
+        ticketId: ticketDetails.id,
       });
 
       if (result.status !== 200) {
@@ -115,23 +153,17 @@ export default function TicketForm() {
     }
   };
 
+  const changeGhanaCard = () => {
+    setCheckGhanaCard(true);
+  }
+
+  // console.log("Selected Ticket:", selectedTicket);
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 relative">
-      <div className="absolute top-4 right-4 flex gap-2">
-        <Button onClick={() => navigate("/ticket")} variant="outline">
-          Dashboard
-        </Button>
-        <Button
-          onClick={() => {
-            localStorage.removeItem("verifiedPolice");
-            navigate("/");
-          }}
-          variant="ghost"
-        >
-          Sign Out
-        </Button>
-      </div>
+     <Navbar />
 
+    {checkGhanaCard === false ? 
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -208,7 +240,7 @@ export default function TicketForm() {
                     field.onChange(val);
                     setSelectedTicket(val);
                   }}
-                  value={field.value}
+                  value={field.price}
                   disabled={loading}
                 >
                   <FormControl>
@@ -218,8 +250,8 @@ export default function TicketForm() {
                   </FormControl>
                   <SelectContent>
                     {ticketOptions.map((ticket) => (
-                      <SelectItem key={ticket.value} value={ticket.value}>
-                        {ticket.label}
+                      <SelectItem key={ticket.price} value={ticket.price.toString()}>
+                        {ticket.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -233,10 +265,10 @@ export default function TicketForm() {
           {selectedTicket && (
             <div className="mt-6 border rounded-lg bg-gray-100 p-4 text-center">
               <p className="text-lg font-semibold">
-                {getTicketDetails(selectedTicket)?.label.split(" - ")[0]} Ticket
+                {ticketOptions.find(t => t.price.toString() === selectedTicket)?.title} Ticket
               </p>
               <p className="text-gray-600 mt-1">
-                Amount: GHS {getTicketDetails(selectedTicket)?.amount}
+                Amount: GHS {selectedTicket}
               </p>
             </div>
           )}
@@ -246,8 +278,19 @@ export default function TicketForm() {
             type="submit"
             className="w-full mt-6"
             disabled={loading || !selectedTicket}
+            style={{ backgroundColor: "#048000FF", color: "white" }}
           >
             {loading ? "Generating Ticket..." : "Generate Ticket"}
+          </Button>
+
+          {/* Submit Button */}
+          <Button
+            onClick={changeGhanaCard}
+            className="w-full mt-6"
+            disabled={loading}
+            style={{ backgroundColor: "#460080FF", color: "white" }}
+          >
+            {loading ? "Loading..." : "Validate Another Ghana Card"}
           </Button>
 
           <div className="mt-4 text-xs text-gray-400 flex items-center justify-center gap-2">
@@ -255,7 +298,12 @@ export default function TicketForm() {
             Your data is securely processed
           </div>
         </form>
-      </Form>
+      </Form> 
+    : 
+    
+    <PoliceGhanaCardVerificationForm />
+    }
+      
     </div>
   );
 }

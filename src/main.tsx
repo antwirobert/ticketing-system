@@ -8,6 +8,7 @@ import PendingTicket from "./pages/PendingTicket.tsx";
 import { Toaster } from "sonner";
 import UserGhanaCardVerificationForm from "./components/UserGhanaCardVerificationForm.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import AdminPage from "./pages/Admin.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/ticket" element={<Ticket />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route
           path="/validate-user"
           element={<UserGhanaCardVerificationForm />}
